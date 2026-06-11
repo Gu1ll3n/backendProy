@@ -14,7 +14,6 @@ import {
   Shield,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
-import { authApi } from "@/lib/auth.api";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -44,13 +43,18 @@ const roleLabel: Record<string, string> = {
 };
 
 export default function AppLayout() {
-  const { user, logout } = useAuthStore();
+  // Selectores optimizados para useAuthStore
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+  
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
-      await authApi.logout();
+      await fetch("http://localhost:3000/api/auth/logout", { 
+        method: "POST",
+      });
     } catch {
       // Ignore API errors
     }

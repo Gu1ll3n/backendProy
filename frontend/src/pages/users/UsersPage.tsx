@@ -379,7 +379,9 @@ export default function UsersPage() {
               </Label>
               <Select
                 value={form.role}
-                onValueChange={(v) => setForm((f) => ({ ...f, role: v }))}
+                onValueChange={(v) =>
+                  setForm((f) => ({ ...f, role: v as "ADMIN" | "DOCTOR" | "RECEPCION" }))
+                }
               >
                 <SelectTrigger className="bg-background/50 border-border/60">
                   <SelectValue />

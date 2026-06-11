@@ -1,83 +1,91 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-  provider     = "prisma-client-js"
-  moduleFormat = "cjs"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id           Int           @id @default(autoincrement())
-  email        String        @unique
-  password     String
-  name         String
-  role         String        // "ADMIN", "DOCTOR", "RECEPCION"
-  isActive     Boolean       @default(true)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  accessLogs   AccessLog[]
-  auditLogs    AuditLog[]
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  password  String
+  role      String
+  createdAt DateTime @default(now())
+
   appointments Appointment[] @relation("DoctorAppointments")
+  auditLogs    AuditLog[]
+  accessLogs   AccessLog[]
+}
+
+model Patient {
+  id             Int       @id @default(autoincrement())
+  firstName      String
+  lastName       String
+  ci             String    @unique
+
+  phone          String?
+  address        String?
+  gender         String?
+  birthDate      DateTime?
+
+  email          String?
+  bloodType      String?
+  allergies      String?
+  medicalHistory String?
+
+  createdAt      DateTime  @default(now())
+  deletedAt      DateTime?
+
+  appointments Appointment[]
+}
+
+model Appointment {
+  id          Int       @id @default(autoincrement())
+  patientId   Int
+  doctorId    Int
+  scheduledAt DateTime
+  status      String
+  reason      String?
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor  User    @relation("DoctorAppointments", fields: [doctorId], references: [id])
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([scheduledAt])
 }
 
 model AuditLog {
   id        Int      @id @default(autoincrement())
   userId    Int?
-  user      User?    @relation(fields: [userId], references: [id])
-  action    String   // "PATIENT_CREATED", "APPOINTMENT_UPDATED", "USER_ROLE_CHANGED", etc.
-  entity    String   // "Patient", "Appointment", "User"
+  action    String
+  entity    String
   entityId  Int?
   detail    String?
   createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model AccessLog {
   id        Int      @id @default(autoincrement())
   userId    Int?
-  user      User?    @relation(fields: [userId], references: [id])
   ip        String
-  userAgent String
-  event     String // "LOGIN_SUCCESS", "LOGIN_FAILED", "LOGOUT"
+  userAgent String?
+  event     String
   detail    String?
   createdAt DateTime @default(now())
-}
 
-model Patient {
-  id             Int           @id @default(autoincrement())
-  firstName      String
-  lastName       String
-  ci             String        @unique // Cédula de identidad
-  birthDate      DateTime
-  gender         String // "M", "F", "O"
-  phone          String
-  email          String?
-  address        String?
-  bloodType      String?
-  allergies      String?
-  medicalHistory String?
-  deletedAt      DateTime?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  appointments   Appointment[]
-}
+  user User? @relation(fields: [userId], references: [id])
 
-model Appointment {
-  id           Int       @id @default(autoincrement())
-  patientId    Int
-  patient      Patient   @relation(fields: [patientId], references: [id])
-  doctorId     Int
-  doctor       User      @relation("DoctorAppointments", fields: [doctorId], references: [id])
-  scheduledAt  DateTime
-  reason       String
-  status       String    @default("SCHEDULED") // "SCHEDULED","COMPLETED","CANCELLED","NO_SHOW"
-  notes        String?
-  diagnosis    String?
-  prescription String?
-  deletedAt    DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  @@index([userId])
+  @@index([createdAt])
 }

@@ -1,25 +1,41 @@
-import api from '@/lib/api'
+import axios from "axios";
+import { useAuthStore } from "@/store/authStore";
 
-export interface LoginData {
-  email: string
-  password: string
-  captchaToken: string
-  captchaAnswer: string
+const api = axios.create({
+  baseURL: "http://localhost:3000/api",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  withCredentials: true,
+});
+
+api.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token;
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
+
+interface LoginPayload {
+  email: string;
+  password: string;
+  captchaToken: string;
+  captchaAnswer: string;
 }
 
-export interface CaptchaResponse {
-  token: string
-  question: string
-}
+const authApi = {
+  async getCaptcha() {
+    const { data } = await api.get("/auth/captcha");
+    return data;
+  },
 
-export const authApi = {
-  getCaptcha: () => api.get<CaptchaResponse>('/auth/captcha').then((r) => r.data),
-  login: (data: LoginData) =>
-    api
-      .post<{ accessToken: string; user: { id: number; email: string; name: string; role: string } }>(
-        '/auth/login',
-        data,
-      )
-      .then((r) => r.data),
-  logout: () => api.post('/auth/logout').then((r) => r.data),
-}
+  async login(payload: LoginPayload) {
+    const { data } = await api.post("/auth/login", payload);
+    return data;
+  },
+};
+
+export default authApi;

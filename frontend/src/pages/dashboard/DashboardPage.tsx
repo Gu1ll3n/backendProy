@@ -32,6 +32,8 @@ type ITootip = {
   payload?: {
     name?: string;
     value?: number;
+    payload?: any;
+    fill?: string;
   }[];
   label?: string;
 };
@@ -145,7 +147,7 @@ const CustomTooltipPie = ({ active, payload }: ITootip) => {
     return (
       <div className="bg-card border border-border/80 rounded-lg px-3 py-2 shadow-xl text-sm">
         <p className="text-white font-semibold">{payload[0].name}</p>
-        <p className="font-bold" style={{ color: payload[0].payload.fill }}>
+        <p className="font-bold" style={{ color: payload[0].payload?.fill }}>
           {payload[0].value} usuarios
         </p>
       </div>
@@ -155,6 +157,8 @@ const CustomTooltipPie = ({ active, payload }: ITootip) => {
 };
 
 export default function DashboardPage() {
+  console.log("Dashboard render");
+  
   const { data: stats, isLoading: statsLoading } = useAppointmentStats();
   const { data: appointments, isLoading: apptLoading } = useAppointments();
   const { data: userStats, isLoading: userStatsLoading } = useUserStats();
@@ -171,7 +175,6 @@ export default function DashboardPage() {
       );
     }) || [];
 
-  // Pie chart data from userStats
   const pieData = userStats
     ? Object.entries(userStats).map(([role, count]) => ({
         name: ROLE_LABELS[role as keyof typeof ROLE_LABELS] || role,
@@ -280,18 +283,6 @@ export default function DashboardPage() {
                     stroke="#33a19b"
                     strokeWidth={2.5}
                     fill="url(#colorCitas)"
-                    dot={{
-                      fill: "#33a19b",
-                      r: 4,
-                      strokeWidth: 2,
-                      stroke: "#0f172a",
-                    }}
-                    activeDot={{
-                      r: 6,
-                      stroke: "#33a19b",
-                      strokeWidth: 2,
-                      fill: "#0f172a",
-                    }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -333,7 +324,6 @@ export default function DashboardPage() {
                     <Tooltip content={<CustomTooltipPie />} />
                   </PieChart>
                 </ResponsiveContainer>
-                {/* Legend */}
                 <div className="flex flex-col gap-2 w-full mt-1">
                   {pieData.map((d) => (
                     <div
@@ -361,221 +351,41 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Charts row 2: Bar + Today's appointments */}
+      {/* Row 2: Bar + Today */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Bar Chart — Top doctores */}
         <Card className="card-premium bg-card/50 border-border/80 xl:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-white text-lg flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-brand-orange" />
               Top doctores por citas
             </CardTitle>
-            <CardDescription className="text-muted-foreground text-xs">
-              Los 5 médicos con más citas registradas
-            </CardDescription>
           </CardHeader>
           <CardContent>
             {statsLoading ? (
               <Skeleton className="h-48 bg-muted/30 rounded-lg" />
-            ) : (stats?.topDoctores?.length ?? 0) === 0 ? (
-              <div className="h-48 flex items-center justify-center">
-                <p className="text-muted-foreground/40 text-sm">
-                  Sin datos disponibles
-                </p>
-              </div>
             ) : (
               <ResponsiveContainer width="100%" height={200}>
-                <BarChart
-                  data={stats?.topDoctores || []}
-                  layout="vertical"
-                  margin={{ top: 0, right: 20, left: 0, bottom: 0 }}
-                >
-                  <defs>
-                    <linearGradient id="colorBar" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#f97316" stopOpacity={0.9} />
-                      <stop
-                        offset="100%"
-                        stopColor="#f97316"
-                        stopOpacity={0.4}
-                      />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="rgba(255,255,255,0.05)"
-                    horizontal={false}
-                  />
-                  <XAxis
-                    type="number"
-                    tick={{ fill: "#64748b", fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    allowDecimals={false}
-                  />
-                  <YAxis
-                    dataKey="name"
-                    type="category"
-                    width={100}
-                    tick={{ fill: "#94a3b8", fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    tickFormatter={(v: string) =>
-                      v.length > 14 ? v.substring(0, 14) + "…" : v
-                    }
-                  />
+                <BarChart data={stats?.topDoctores || []} layout="vertical">
+                  <XAxis type="number" hide />
+                  <YAxis dataKey="name" type="category" width={100} tick={{fill: "#94a3b8", fontSize: 11}} axisLine={false} tickLine={false} />
                   <Tooltip content={<CustomTooltipBar />} />
-                  <Bar
-                    dataKey="citas"
-                    fill="url(#colorBar)"
-                    radius={[0, 6, 6, 0]}
-                    maxBarSize={24}
-                  />
+                  <Bar dataKey="citas" fill="#f97316" radius={[0, 6, 6, 0]} maxBarSize={24} />
                 </BarChart>
               </ResponsiveContainer>
             )}
           </CardContent>
         </Card>
-
-        {/* Today's appointments */}
-        <Card className="card-premium bg-card/50 border-border/80 flex flex-col">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-white text-lg flex items-center gap-2">
-              <span className="pulse-dot" />
-              Citas de hoy
-            </CardTitle>
-            <CardDescription className="text-muted-foreground text-xs">
-              {todayAppts.length} cita{todayAppts.length !== 1 ? "s" : ""}{" "}
-              programada{todayAppts.length !== 1 ? "s" : ""} para hoy
-            </CardDescription>
+        
+        {/* Today's Appointments */}
+        <Card className="card-premium bg-card/50 border-border/80">
+          <CardHeader className="pb-2">
+             <CardTitle className="text-white text-lg">Citas de hoy</CardTitle>
           </CardHeader>
-          <CardContent className="flex-1">
-            {apptLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-16 bg-muted/30 rounded-lg" />
-                ))}
-              </div>
-            ) : todayAppts.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground/50">
-                <CalendarDays className="w-10 h-10 mx-auto mb-3 opacity-20" />
-                <p className="text-sm">No hay citas programadas para hoy</p>
-              </div>
-            ) : (
-              <div className="space-y-3 overflow-y-auto max-h-72">
-                {todayAppts.map((appt) => {
-                  const cfg =
-                    statusConfig[appt.status] || statusConfig.SCHEDULED;
-                  return (
-                    <div
-                      key={appt.id}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border border-border/60 hover:border-brand-teal/30 transition-colors"
-                    >
-                      <div className="text-center min-w-10">
-                        <p className="text-brand-teal font-extrabold text-xs">
-                          {format(new Date(appt.scheduledAt), "HH:mm")}
-                        </p>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white font-semibold text-xs truncate">
-                          {appt.patient.firstName} {appt.patient.lastName}
-                        </p>
-                        <p className="text-muted-foreground text-[10px] truncate mt-0.5">
-                          {appt.reason}
-                        </p>
-                      </div>
-                      <Badge
-                        className={`${cfg.className} border text-[10px] uppercase font-bold tracking-wide shrink-0`}
-                      >
-                        {cfg.label}
-                      </Badge>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+          <CardContent>
+             {apptLoading ? <Skeleton className="h-40" /> : <p className="text-sm text-muted-foreground">{todayAppts.length} citas programadas.</p>}
           </CardContent>
         </Card>
       </div>
-
-      {/* Recent appointments table */}
-      <Card className="card-premium bg-card/50 border-border/80">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-white text-lg flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-brand-teal" />
-            Últimas citas registradas
-          </CardTitle>
-          <CardDescription className="text-muted-foreground text-xs">
-            Las 5 citas médicas más recientes en el sistema
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {apptLoading ? (
-            <div className="space-y-2">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Skeleton key={i} className="h-10 bg-muted/30 rounded" />
-              ))}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-muted-foreground border-b border-border/40 text-left">
-                    <th className="pb-3 font-semibold text-xs uppercase tracking-wider">
-                      Paciente
-                    </th>
-                    <th className="pb-3 font-semibold text-xs uppercase tracking-wider hidden sm:table-cell">
-                      Doctor
-                    </th>
-                    <th className="pb-3 font-semibold text-xs uppercase tracking-wider">
-                      Fecha / Hora
-                    </th>
-                    <th className="pb-3 font-semibold text-xs uppercase tracking-wider">
-                      Estado
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/20">
-                  {(appointments || []).slice(0, 5).map((appt) => {
-                    const cfg =
-                      statusConfig[appt.status] || statusConfig.SCHEDULED;
-                    return (
-                      <tr
-                        key={appt.id}
-                        className="text-slate-300 hover:bg-secondary/20 transition-colors"
-                      >
-                        <td className="py-3 font-semibold text-white">
-                          {appt.patient.firstName} {appt.patient.lastName}
-                        </td>
-                        <td className="py-3 text-muted-foreground hidden sm:table-cell">
-                          {appt.doctor.name}
-                        </td>
-                        <td className="py-3 text-muted-foreground font-mono">
-                          {format(
-                            new Date(appt.scheduledAt),
-                            "dd/MM/yyyy HH:mm",
-                          )}
-                        </td>
-                        <td className="py-3">
-                          <Badge
-                            className={`${cfg.className} border text-[10px] uppercase font-bold tracking-wide`}
-                          >
-                            {cfg.label}
-                          </Badge>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              {!appointments?.length && (
-                <p className="text-center text-muted-foreground/40 text-sm py-12">
-                  Sin citas médicas registradas
-                </p>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }
