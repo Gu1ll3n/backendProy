@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -38,24 +38,6 @@ type ITootip = {
   label?: string;
 };
 
-const statusConfig = {
-  SCHEDULED: {
-    label: "Programada",
-    className: "bg-brand-teal/10 text-brand-teal border-brand-teal/20",
-  },
-  COMPLETED: {
-    label: "Completada",
-    className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  },
-  CANCELLED: {
-    label: "Cancelada",
-    className: "bg-red-500/10 text-red-400 border-red-500/20",
-  },
-  NO_SHOW: {
-    label: "No asistió",
-    className: "bg-brand-orange/10 text-brand-orange border-brand-orange/20",
-  },
-};
 
 const ROLE_COLORS = {
   ADMIN: "#8b5cf6",
